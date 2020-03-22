@@ -3,6 +3,7 @@ package com.fiachar.cadarcorev1;
 import android.net.Uri;
 import android.os.Bundle;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.ar.core.Anchor;
@@ -15,12 +16,17 @@ import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.Camera;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.Scene;
+import com.google.ar.sceneform.assets.RenderableSource;
 import com.google.ar.sceneform.collision.Box;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.ListResult;
+import com.google.firebase.storage.StorageReference;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -172,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
         ImageView option1 = new ImageView(this);
         option1.setImageResource(R.drawable.option1);
         option1.setContentDescription("option1");
-        option1.setOnClickListener(view -> addObject(Uri.parse("Headphone_Stand.sfb")));
+        option1.setOnClickListener(view -> populateModels());
         //((LinearLayout.LayoutParams)option1.getLayoutParams()).weight = 0.3f;
         gallery.addView(option1, param);
 
@@ -202,14 +208,31 @@ public class MainActivity extends AppCompatActivity {
                 Trackable trackable = hit.getTrackable();
                 if (trackable instanceof Plane &&
                         ((Plane) trackable).isPoseInPolygon(hit.getHitPose())) {
-                    modelLoader.loadModel(hit.createAnchor(), model);
+                    loadModel(hit.createAnchor(), model);
                     break;
 
                 }
             }
         }
     }
-
+    void loadModel(Anchor anchor, Uri uri) {
+        ModelRenderable.builder()
+                .setSource(this, RenderableSource.builder()
+                        .setSource(this, uri, RenderableSource.SourceType.GLB).build())
+                .build()
+                .handle((renderable, throwable) -> {
+                    MainActivity activity = this;
+                    if (activity == null) {
+                        return null;
+                    } else if (throwable != null) {
+                        activity.onException(throwable);
+                    } else {
+                        activity.addNodeToScene(anchor, renderable);
+                    }
+                    return null;
+                });
+        return;
+    }
     public class ModelLoader {
         private final WeakReference<MainActivity> owner;
         private static final String TAG = "ModelLoader";
@@ -218,27 +241,7 @@ public class MainActivity extends AppCompatActivity {
             this.owner = owner;
         }
 
-        void loadModel(Anchor anchor, Uri uri) {
-            if (owner.get() == null) {
-                Log.d(TAG, "Activity is null.  Cannot load model.");
-                return;
-            }
-            ModelRenderable.builder()
-                    .setSource(owner.get(), uri)
-                    .build()
-                    .handle((renderable, throwable) -> {
-                        MainActivity activity = owner.get();
-                        if (activity == null) {
-                            return null;
-                        } else if (throwable != null) {
-                            activity.onException(throwable);
-                        } else {
-                            activity.addNodeToScene(anchor, renderable);
-                        }
-                        return null;
-                    });
-            return;
-        }
+
 
 
     }
@@ -261,6 +264,35 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
         return;
     }
+
+    private void populateModels(){
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+
+        StorageReference storageRef = storage.getReference();
+
+        StorageReference cadFilesRef = storageRef.child("CAD_Files");
+
+        cadFilesRef.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
+            @Override
+            public void onSuccess(ListResult listResult) {
+
+                for (StorageReference ref:listResult.getItems()) {
+
+                    ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            //placeModel(anchor, uri.toString());
+                            addObject(uri);
+
+                        }
+                    });
+
+                }
+            }
+        });
+
+    }
+}
 
     /*@param scene */
 
@@ -298,11 +330,11 @@ public class MainActivity extends AppCompatActivity {
 
         }
         return msg;
-    } */
+    }*/
 
    // Button button=findViewById(R.id.button);
     //model.setOnTapListener((hitTestResult, motionEvent1) -> button.setOnClickListener(v -> model.setParent(null)));
-}
+
 
 
 
