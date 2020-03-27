@@ -65,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
 
+
+
 /*        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -175,26 +177,26 @@ public class MainActivity extends AppCompatActivity {
                 0.33f
         );
 
-        ImageView option1 = new ImageView(this);
-        option1.setImageResource(R.drawable.option1);
-        option1.setContentDescription("option1");
-        option1.setOnClickListener(view -> populateModels());
+        ImageView option3 = new ImageView(this);
+        option3.setImageResource(R.drawable.option3);
+        option3.setContentDescription("option1");
+        option3.setOnClickListener(view -> populateModels());
         //((LinearLayout.LayoutParams)option1.getLayoutParams()).weight = 0.3f;
-        gallery.addView(option1, param);
+        gallery.addView(option3, param);
 
-        ImageView option2 = new ImageView(this);
+       /* ImageView option2 = new ImageView(this);
         option2.setImageResource(R.drawable.option2);
         option2.setContentDescription("option2");
-        option2.setOnClickListener(view -> addObject(Uri.parse("Headphone_Holder3.sfb")));
+        option2.setOnClickListener(view -> addObject(Uri.parse("")));
         //((LinearLayout.LayoutParams)option1.getLayoutParams()).weight = 0.3f;
         gallery.addView(option2, param);
 
         ImageView option3 = new ImageView(this);
         option3.setImageResource(R.drawable.option3);
         option3.setContentDescription("option3");
-        option3.setOnClickListener(view -> addObject(Uri.parse("Headphones Base.sfb")));
+        option3.setOnClickListener(view -> addObject(Uri.parse("")));
         //((LinearLayout.LayoutParams)option1.getLayoutParams()).weight = 0.3f;
-        gallery.addView(option3, param);
+        gallery.addView(option3, param); */
 
     }
 
