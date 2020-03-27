@@ -1,5 +1,8 @@
 package com.fiachar.cadarcorev1;
 
+import android.Manifest;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -13,6 +16,7 @@ import com.google.ar.core.Plane;
 import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
 import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.ArSceneView;
 import com.google.ar.sceneform.Camera;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.Scene;
@@ -31,8 +35,13 @@ import com.google.firebase.storage.StorageReference;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 
+import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
+import android.view.PixelCopy;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,8 +49,15 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -53,9 +69,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isTracking;
     private boolean isHitting;
     private ModelLoader modelLoader;
-    //private Node modelNode;
-    // AnchorNode anchorNode;
-    //private Scene scene;
+    private AnchorNode Anchor;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,16 +80,9 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
 
-
-
-/*        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
+        //Floating Action button for screenshots
+        FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(view -> takePhoto());
 
         fragment = (ArFragment)
                 getSupportFragmentManager().findFragmentById(R.id.sceneform_fragment);
@@ -89,6 +97,80 @@ public class MainActivity extends AppCompatActivity {
 
         initializeGallery();
     }
+
+    //Taking Screenshots Code begin
+
+    private String generateFilename() {
+        String date =
+                new SimpleDateFormat("yyyyMMddHHmmss", java.util.Locale.getDefault()).format(new Date());
+        return Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES) + File.separator + "Sceneform/" + date + "_screenshot.jpg";
+    }
+
+    private void saveBitmapToDisk(Bitmap bitmap, String filename) throws IOException { //error occurring from here
+
+        File out = new File(filename);
+        if (!out.getParentFile().exists()) {
+            out.getParentFile().mkdirs();
+        }
+        try (FileOutputStream outputStream = new FileOutputStream(filename);
+             ByteArrayOutputStream outputData = new ByteArrayOutputStream()) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputData);
+            outputData.writeTo(outputStream);
+            outputStream.flush();
+            outputStream.close();
+        } catch (IOException ex) {
+            throw new IOException("Failed to save bitmap to disk", ex); //Error Occurring here
+        }
+    }
+
+    private void takePhoto() {
+        final String filename = generateFilename();
+        ArSceneView view = fragment.getArSceneView();
+
+        // Create a bitmap the size of the scene view.
+        final Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(),
+                Bitmap.Config.ARGB_8888);
+
+        // Create a handler thread to offload the processing of the image.
+        final HandlerThread handlerThread = new HandlerThread("PixelCopier");
+        handlerThread.start();
+        // Make the request to copy.
+        PixelCopy.request(view, bitmap, (copyResult) -> {
+            if (copyResult == PixelCopy.SUCCESS) {
+                try {
+                    saveBitmapToDisk(bitmap, filename);
+                } catch (IOException e) {
+                    Toast toast = Toast.makeText(MainActivity.this, e.toString(),
+                            Toast.LENGTH_LONG);
+                    toast.show();
+                    return;
+                }
+                Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
+                        "Photo saved", Snackbar.LENGTH_LONG);
+                snackbar.setAction("Open in Photos", v -> {
+                    File photoFile = new File(filename);
+
+                    Uri photoURI = FileProvider.getUriForFile(MainActivity.this,
+                            MainActivity.this.getPackageName() + ".ar.fiachar.name.provider",
+                            photoFile);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
+                    intent.setDataAndType(photoURI, "image/*");
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(intent);
+
+                });
+                snackbar.show();
+            } else {
+                Toast toast = Toast.makeText(MainActivity.this,
+                        "Failed to copyPixels: " + copyResult, Toast.LENGTH_LONG);
+                toast.show();
+            }
+            handlerThread.quitSafely();
+        }, new Handler(handlerThread.getLooper()));
+    }
+
+    //screenshot code end
 
     private void onUpdate() {
         boolean trackingChanged = updateTracking();
@@ -217,6 +299,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     void loadModel(Anchor anchor, Uri uri) {
         ModelRenderable.builder()
                 .setSource(this, RenderableSource.builder()
@@ -233,8 +316,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                     return null;
                 });
-        return;
+
     }
+
     public class ModelLoader {
         private final WeakReference<MainActivity> owner;
         private static final String TAG = "ModelLoader";
@@ -242,9 +326,6 @@ public class MainActivity extends AppCompatActivity {
         ModelLoader(WeakReference<MainActivity> owner) {
             this.owner = owner;
         }
-
-
-
 
     }
 
@@ -264,7 +345,7 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle("Codelab error!");
         AlertDialog dialog = builder.create();
         dialog.show();
-        return;
+
     }
 
     private void populateModels(){
@@ -294,27 +375,28 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
-}
-
-    /*@param scene */
-
-    /*public String generateNodeInfo() {
 
 
 
-        if (modelNode == null) {
+
+
+   /* public String generateNodeInfo() {
+
+
+
+        if (Anchor == null) {
             return null;
         }
         Camera camera = scene.getCamera();
         String msg = null;
 
-        if (modelNode!= null && modelNode.getRenderable() != null) {
-            Vector3 scale = modelNode.getLocalScale();
-            Vector3 size = ((Box) modelNode.getCollisionShape()).getSize();
+        if (Anchor!= null && Anchor.getRenderable() != null) {
+            Vector3 scale = Anchor.getLocalScale();
+            Vector3 size = ((Box) Anchor.getCollisionShape()).getSize();
             size.x *= scale.x;
             size.y *= scale.y;
             size.z *= scale.z;
-            Vector3 dir = Vector3.subtract(modelNode.getForward(), camera.getForward());
+            Vector3 dir = Vector3.subtract(Anchor.getForward(), camera.getForward());
             msg = String.format(Locale.getDefault(), "%s\n%s\n%s",
                     String.format(Locale.getDefault(), "scale: (%.02f, %.02f, %.02f)",
                             scale.x,
@@ -332,7 +414,9 @@ public class MainActivity extends AppCompatActivity {
 
         }
         return msg;
-    }*/
+    } */
+
+}
 
    // Button button=findViewById(R.id.button);
     //model.setOnTapListener((hitTestResult, motionEvent1) -> button.setOnClickListener(v -> model.setParent(null)));
