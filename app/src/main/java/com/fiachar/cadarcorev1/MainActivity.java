@@ -104,13 +104,13 @@ public class MainActivity extends AppCompatActivity {
         String date =
                 new SimpleDateFormat("yyyyMMddHHmmss", java.util.Locale.getDefault()).format(new Date());
         return Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES) + File.separator + "Sceneform/" + date + "_screenshot.jpg";
+                Environment.DIRECTORY_PICTURES) + File.separator  + date + "_screenshot.jpg";
     }
 
     private void saveBitmapToDisk(Bitmap bitmap, String filename) throws IOException { //error occurring from here
 
         File out = new File(filename);
-        if (!out.getParentFile().exists()) {
+        if (out.getParentFile().exists()) {
             out.getParentFile().mkdirs();
         }
         try (FileOutputStream outputStream = new FileOutputStream(filename);
@@ -152,8 +152,8 @@ public class MainActivity extends AppCompatActivity {
                     File photoFile = new File(filename);
 
                     Uri photoURI = FileProvider.getUriForFile(MainActivity.this,
-                            MainActivity.this.getPackageName() + ".ar.fiachar.name.provider",
-                            photoFile);
+                         this.getPackageName() + ".provider",
+                           photoFile);
                     Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
                     intent.setDataAndType(photoURI, "image/*");
                     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
