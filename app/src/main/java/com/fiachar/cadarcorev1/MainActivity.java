@@ -25,6 +25,7 @@ import com.google.ar.sceneform.collision.Box;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.google.firebase.FirebaseApp;
@@ -49,6 +50,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
@@ -70,6 +72,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean isHitting;
     private ModelLoader modelLoader;
     private AnchorNode Anchor;
+    private Node modelNode;
+    private TextView model_info;
+    private Scene scene;
 
 
     @Override
@@ -104,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
         String date =
                 new SimpleDateFormat("yyyyMMddHHmmss", java.util.Locale.getDefault()).format(new Date());
         return Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES) + File.separator  + date + "_screenshot.jpg";
+                Environment.DIRECTORY_PICTURES) + File.separator + date + "_screenshot.jpg";
     }
 
     private void saveBitmapToDisk(Bitmap bitmap, String filename) throws IOException { //error occurring from here
@@ -152,8 +157,8 @@ public class MainActivity extends AppCompatActivity {
                     File photoFile = new File(filename);
 
                     Uri photoURI = FileProvider.getUriForFile(MainActivity.this,
-                         this.getPackageName() + ".provider",
-                           photoFile);
+                            this.getPackageName() + ".provider",
+                            photoFile);
                     Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
                     intent.setDataAndType(photoURI, "image/*");
                     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -348,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void populateModels(){
+    private void populateModels() {
         FirebaseStorage storage = FirebaseStorage.getInstance();
 
         StorageReference storageRef = storage.getReference();
@@ -359,7 +364,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(ListResult listResult) {
 
-                for (StorageReference ref:listResult.getItems()) {
+                for (StorageReference ref : listResult.getItems()) {
 
                     ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                         @Override
@@ -374,53 +379,64 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        model_info = findViewById(R.id.dimensions_info);
+
+    }
+
+    private void setInfoText(String msg) {
+        if (model_info != null) {
+            model_info.setText(msg);
+        }
+
     }
 
 
 
 
+    public void setScene(Scene scene) {
+        this.scene = scene;
+    }
 
-   /* public String generateNodeInfo() {
+    public Camera getCamera() {
+        return scene != null ? scene.getCamera() : null;
+    }
 
 
+     /**
+    * Generates a string for describing the node's scale and rotation.
+    * @return string for model info, or null if the node is not available.
+    */public String generateNodeInfo() {
+       if (scene == null) {
+           return null;
+       }
+         Camera camera = scene.getCamera();
+         String msg = null;
+       if (modelNode != null && modelNode.getRenderable() != null) {
+           Vector3 scale = modelNode.getLocalScale();
+           Vector3 size = ((Box) modelNode.getCollisionShape()).getSize();
+           size.x *= scale.x;
+           size.y *= scale.y;
+           size.z *= scale.z;
+           Vector3 dir = Vector3.subtract(modelNode.getForward(), camera.getForward());
+           msg = String.format(Locale.getDefault(), "%s\n%s\n%s",
+                   String.format(Locale.getDefault(), "scale: (%.02f, %.02f, %.02f)",
+                           scale.x,
+                           scale.y,
+                           scale.z),
+                   String.format(Locale.getDefault(), "size: (%.02f, %.02f, %.02f)",
+                           size.x,
+                           size.y,
+                           size.z),
+                   String.format(Locale.getDefault(), "dir: (%.02f, %.02f, %.02f)",
+                           dir.x,
+                           dir.y,
+                           dir.z)
+           );
 
-        if (Anchor == null) {
-            return null;
-        }
-        Camera camera = scene.getCamera();
-        String msg = null;
-
-        if (Anchor!= null && Anchor.getRenderable() != null) {
-            Vector3 scale = Anchor.getLocalScale();
-            Vector3 size = ((Box) Anchor.getCollisionShape()).getSize();
-            size.x *= scale.x;
-            size.y *= scale.y;
-            size.z *= scale.z;
-            Vector3 dir = Vector3.subtract(Anchor.getForward(), camera.getForward());
-            msg = String.format(Locale.getDefault(), "%s\n%s\n%s",
-                    String.format(Locale.getDefault(), "scale: (%.02f, %.02f, %.02f)",
-                            scale.x,
-                            scale.y,
-                            scale.z),
-                    String.format(Locale.getDefault(), "size: (%.02f, %.02f, %.02f)",
-                            size.x,
-                            size.y,
-                            size.z),
-                    String.format(Locale.getDefault(), "dir: (%.02f, %.02f, %.02f)",
-                            dir.x,
-                            dir.y,
-                            dir.z)
-            );
-
-        }
-        return msg;
-    } */
-
+       }
+       return msg;
+   }
 }
-
-   // Button button=findViewById(R.id.button);
-    //model.setOnTapListener((hitTestResult, motionEvent1) -> button.setOnClickListener(v -> model.setParent(null)));
-
 
 
 

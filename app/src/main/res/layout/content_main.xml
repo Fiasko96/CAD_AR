@@ -8,6 +8,21 @@
     tools:context=".MainActivity"
     tools:showIn="@layout/activity_main">
 
+    <TextView
+        android:id="@+id/dimensions_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:elevation="2dp"
+        android:singleLine="false"
+        android:background="@drawable/rounded_bg"
+        android:text=""
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="6dp"
+        android:textAlignment="center" />
+
+
     <fragment
         android:id="@+id/sceneform_fragment"
         android:name="com.fiachar.cadarcorev1.WritingArFragment"
