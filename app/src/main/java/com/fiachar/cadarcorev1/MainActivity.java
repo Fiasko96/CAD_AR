@@ -1,6 +1,7 @@
 package com.fiachar.cadarcorev1;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -64,7 +65,7 @@ import java.util.List;
 import java.util.Locale;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Node.TransformChangedListener {
 
     private ArFragment fragment;
     private PointerDrawable pointer = new PointerDrawable();
@@ -75,7 +76,6 @@ public class MainActivity extends AppCompatActivity {
     private Node modelNode;
     private TextView model_info;
     private Scene scene;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
         modelLoader = new ModelLoader(new WeakReference<>(this));
 
         initializeGallery();
+        List<Node> nodeList = fragment.getArSceneView().getScene().getChildren();
+        //fragment.getArSceneView().getScene().getChildren().get(0).addTransformChangedListener(this);
     }
 
     //Taking Screenshots Code begin
@@ -324,6 +326,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
     public class ModelLoader {
         private final WeakReference<MainActivity> owner;
         private static final String TAG = "ModelLoader";
@@ -342,6 +345,8 @@ public class MainActivity extends AppCompatActivity {
         node.setParent(anchorNode);
         fragment.getArSceneView().getScene().addChild(anchorNode);
         node.select();
+        node.addTransformChangedListener(this);
+        List<Node> nodeList = fragment.getArSceneView().getScene().getChildren();
     }
 
     public void onException(Throwable throwable) {
@@ -383,7 +388,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void setInfoText(String msg) {
+    private void SetInfoText(String msg) {
         if (model_info != null) {
             model_info.setText(msg);
         }
@@ -393,8 +398,8 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    public void setScene(Scene scene) {
-        this.scene = scene;
+    public void setScene() {
+        this.scene = fragment.getArSceneView().getScene();
     }
 
     public Camera getCamera() {
@@ -402,10 +407,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
      /**
     * Generates a string for describing the node's scale and rotation.
     * @return string for model info, or null if the node is not available.
-    */public String generateNodeInfo() {
+    */public String generateNodeInfo(Node node) {
+        setScene();
+        modelNode = node;
        if (scene == null) {
            return null;
        }
@@ -436,6 +444,11 @@ public class MainActivity extends AppCompatActivity {
        }
        return msg;
    }
+    @Override
+    public void onTransformChanged(Node node, Node node1) {
+        SetInfoText(generateNodeInfo(node));
+    }
+
 }
 
 
