@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -44,6 +45,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.view.PixelCopy;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -101,8 +103,8 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
         modelLoader = new ModelLoader(new WeakReference<>(this));
 
         initializeGallery();
-        List<Node> nodeList = fragment.getArSceneView().getScene().getChildren();
-        //fragment.getArSceneView().getScene().getChildren().get(0).addTransformChangedListener(this);
+        model_info = findViewById(R.id.dimensions_info);
+        model_info.setText("Please load an object to show its info");
     }
 
     //Taking Screenshots Code begin
@@ -133,12 +135,12 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
 
     private void takePhoto() {
         final String filename = generateFilename();
-        ArSceneView view = fragment.getArSceneView();
-
+        SurfaceView view = fragment.getArSceneView();
+        View overlayView  = findViewById(R.id.dimensions_info);
         // Create a bitmap the size of the scene view.
         final Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(),
                 Bitmap.Config.ARGB_8888);
-
+        Canvas c = new Canvas(bitmap);
         // Create a handler thread to offload the processing of the image.
         final HandlerThread handlerThread = new HandlerThread("PixelCopier");
         handlerThread.start();
@@ -146,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
         PixelCopy.request(view, bitmap, (copyResult) -> {
             if (copyResult == PixelCopy.SUCCESS) {
                 try {
+                    overlayView.draw(c);
                     saveBitmapToDisk(bitmap, filename);
                 } catch (IOException e) {
                     Toast toast = Toast.makeText(MainActivity.this, e.toString(),
@@ -384,7 +387,6 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
             }
         });
 
-        model_info = findViewById(R.id.dimensions_info);
 
     }
 
