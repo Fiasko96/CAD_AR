@@ -34,6 +34,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.ListResult;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.internal.Sleeper;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -62,6 +63,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -77,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
     private AnchorNode Anchor;
     private TextView model_info;
     private Scene scene;
-
+    LinearLayout gallery;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +88,8 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
         Toolbar toolbar = findViewById(R.id.toolbar);
 
         setSupportActionBar(toolbar);
-
+        initializeGallery();
+         populateModels();
 
         //Floating Action button for screenshots
         FloatingActionButton fab = findViewById(R.id.fab);
@@ -103,7 +106,6 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
 
         modelLoader = new ModelLoader(new WeakReference<>(this));
 
-        initializeGallery();
         model_info = findViewById(R.id.dimensions_info);
         model_info.setText("Please load an object to show its information.");
     }
@@ -260,40 +262,33 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
     }
 
     private void initializeGallery() {
-        LinearLayout gallery = findViewById(R.id.gallery_layout);
+        gallery = findViewById(R.id.gallery_layout);
 
         gallery.getBackground().setAlpha(0);
-
+    }
+    private void addToGallery(Uri uri)
+    {
         LinearLayout.LayoutParams param = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                0.33f
+                0.20f
         );
 
         ImageView object1 = new ImageView(this);
         object1.setImageResource(R.drawable.object1);
         object1.setContentDescription("option1");
-        object1.setOnClickListener(view -> populateModels());
-        //((LinearLayout.LayoutParams)option1.getLayoutParams()).weight = 0.3f;
+        object1.setOnClickListener(view -> addObject(uri));
         gallery.addView(object1, param);
-
-       /* ImageView option2 = new ImageView(this);
-        option2.setImageResource(R.drawable.option2);
-        option2.setContentDescription("option2");
-        option2.setOnClickListener(view -> addObject(Uri.parse("")));
-        //((LinearLayout.LayoutParams)option1.getLayoutParams()).weight = 0.3f;
-        gallery.addView(option2, param);
-
-        ImageView option3 = new ImageView(this);
-        option3.setImageResource(R.drawable.option3);
-        option3.setContentDescription("option3");
-        option3.setOnClickListener(view -> addObject(Uri.parse("")));
-        //((LinearLayout.LayoutParams)option1.getLayoutParams()).weight = 0.3f;
-        gallery.addView(option3, param); */
-
     }
-
     private void addObject(Uri model) {
+        for (Node node:fragment.getArSceneView().getScene().getChildren()) {
+            if (node instanceof AnchorNode) {
+                if (((AnchorNode) node).getAnchor() != null) {
+                    ((AnchorNode) node).getAnchor().detach();
+                }
+        }
+        }
+
         Frame frame = fragment.getArSceneView().getArFrame();
         android.graphics.Point pt = getScreenCenter();
         List<HitResult> hits;
@@ -369,22 +364,13 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
 
         StorageReference cadFilesRef = storageRef.child("CAD_Files");
 
-        cadFilesRef.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
-            @Override
-            public void onSuccess(ListResult listResult) {
+        cadFilesRef.listAll().addOnSuccessListener(listResult -> {
 
-                for (StorageReference ref : listResult.getItems()) {
+            for (StorageReference ref : listResult.getItems()) {
 
-                    ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                        @Override
-                        public void onSuccess(Uri uri) {
-                            //placeModel(anchor, uri.toString());
-                            addObject(uri);
-
-                        }
-                    });
-
-                }
+                ref.getDownloadUrl().addOnSuccessListener(uri -> {
+                    addToGallery(uri);
+                });
             }
         });
 
