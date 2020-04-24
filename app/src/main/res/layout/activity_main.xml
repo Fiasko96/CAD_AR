@@ -33,5 +33,15 @@
         app:backgroundTint="#4CAF50"
         app:srcCompat="@android:drawable/ic_menu_camera" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/delete_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginLeft="@dimen/fab_margin"
+        android:layout_marginBottom="90dp"
+        app:backgroundTint="#4CAF50"
+        android:src="@android:drawable/ic_menu_delete"/>
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

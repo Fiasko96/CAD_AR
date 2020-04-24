@@ -75,15 +75,16 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
     private boolean isHitting;
     private ModelLoader modelLoader;
     private AnchorNode Anchor;
-    private Node modelNode;
     private TextView model_info;
     private Scene scene;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
+
         setSupportActionBar(toolbar);
 
 
@@ -104,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
 
         initializeGallery();
         model_info = findViewById(R.id.dimensions_info);
-        model_info.setText("Please load an object to show its info");
+        model_info.setText("Please load an object to show its information.");
     }
 
     //Taking Screenshots Code begin
@@ -136,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
     private void takePhoto() {
         final String filename = generateFilename();
         SurfaceView view = fragment.getArSceneView();
-        View overlayView  = findViewById(R.id.dimensions_info);
+        View overlayView = findViewById(R.id.dimensions_info);
         // Create a bitmap the size of the scene view.
         final Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(),
                 Bitmap.Config.ARGB_8888);
@@ -269,12 +270,12 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
                 0.33f
         );
 
-        ImageView option3 = new ImageView(this);
-        option3.setImageResource(R.drawable.option3);
-        option3.setContentDescription("option1");
-        option3.setOnClickListener(view -> populateModels());
+        ImageView object1 = new ImageView(this);
+        object1.setImageResource(R.drawable.object1);
+        object1.setContentDescription("option1");
+        object1.setOnClickListener(view -> populateModels());
         //((LinearLayout.LayoutParams)option1.getLayoutParams()).weight = 0.3f;
-        gallery.addView(option3, param);
+        gallery.addView(object1, param);
 
        /* ImageView option2 = new ImageView(this);
         option2.setImageResource(R.drawable.option2);
@@ -398,8 +399,6 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
     }
 
 
-
-
     public void setScene() {
         this.scene = fragment.getArSceneView().getScene();
     }
@@ -409,49 +408,84 @@ public class MainActivity extends AppCompatActivity implements Node.TransformCha
     }
 
 
-
-     /**
-    * Generates a string for describing the node's scale and rotation.
-    * @return string for model info, or null if the node is not available.
-    */public String generateNodeInfo(Node node) {
+    /**
+     * Generates a string for describing the node's scale and rotation.
+     *
+     * @return string for model info, or null if the node is not available.
+     */
+    public String generateNodeInfo(Node node) {
         setScene();
-        modelNode = node;
-       if (scene == null) {
-           return null;
-       }
-         Camera camera = scene.getCamera();
-         String msg = null;
-       if (modelNode != null && modelNode.getRenderable() != null) {
-           Vector3 scale = modelNode.getLocalScale();
-           Vector3 size = ((Box) modelNode.getCollisionShape()).getSize();
-           size.x *= scale.x;
-           size.y *= scale.y;
-           size.z *= scale.z;
-           Vector3 dir = Vector3.subtract(modelNode.getForward(), camera.getForward());
-           msg = String.format(Locale.getDefault(), "%s\n%s\n%s",
-                   String.format(Locale.getDefault(), "scale: (%.02f, %.02f, %.02f)",
-                           scale.x,
-                           scale.y,
-                           scale.z),
-                   String.format(Locale.getDefault(), "size: (%.02f, %.02f, %.02f)",
-                           size.x,
-                           size.y,
-                           size.z),
-                   String.format(Locale.getDefault(), "dir: (%.02f, %.02f, %.02f)",
-                           dir.x,
-                           dir.y,
-                           dir.z)
-           );
+        if (scene == null) {
+            return null;
+        }
+        Camera camera = scene.getCamera();
+        String msg = null;
+        if (node != null && node.getRenderable() != null) {
+            Vector3 scale = node.getLocalScale();
+            Vector3 size = ((Box) node.getCollisionShape()).getSize();
+            size.x *= scale.x;
+            size.y *= scale.y;
+            size.z *= scale.z;
+            Vector3 dir = Vector3.subtract(node.getForward(), camera.getForward());
+            msg = String.format(Locale.getDefault(), "%s\n%s\n%s",
+                    String.format(Locale.getDefault(), "Scale pc: (%.01f, %.01f, %.01f)",
+                            scale.x * 100,
+                            scale.y * 100,
+                            scale.z * 100),
+                    String.format(Locale.getDefault(), "Size mm: (%.01f, %.01f, %.01f)",
+                            size.x * 1000,
+                            size.y * 1000,
+                            size.z * 1000),
+                    String.format(Locale.getDefault(), "Dir m: (%.02f, %.02f, %.02f)",
+                            dir.x,
+                            dir.y,
+                            dir.z)
+            );
 
-       }
-       return msg;
-   }
+        }
+        return msg;
+    }
     @Override
     public void onTransformChanged(Node node, Node node1) {
         SetInfoText(generateNodeInfo(node));
     }
-
 }
+
+   /* private void removeAnchorNode(AnchorNode nodeToremove) {
+        //Remove an anchor node
+        if (nodeToremove != null) {
+            fragment.getArSceneView().getScene().removeChild(nodeToremove);
+            anchorNodeList.remove(nodeToremove);
+            nodeToremove.getAnchor().detach();
+            nodeToremove.setParent(null);
+            nodeToremove = null;
+            numberOfAnchors--;
+            //Toast.makeText(LineViewMainActivity.this, "Test Delete - markAnchorNode removed", Toast.LENGTH_SHORT).show();
+
+        }
+    }
+
+
+
+        FloatingActionButton deleteButton = findViewById(R.id.delete_button);
+        deleteButton.setOnClickListener(view -> {
+            ();
+        });
+        @Override
+
+        public void onClick(View view) {
+            //Delete the Anchor if it exists
+            Log.d(TAG,"Deleteing anchor");
+            int currentAnchorIndex;
+            if (numberOfAnchors < 1 ) {
+                Toast.makeText(MainActivity.this, "All nodes deleted", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            removeAnchorNode(currentSelectedAnchorNode);
+            currentSelectedAnchorNode = null;
+
+        }
+}*/
 
 
 
